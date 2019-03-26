@@ -1,6 +1,34 @@
 # spring-boot-mongodb-reactive-config
 A sample Spring Boot 2.1.3 app which uses a custom configuration for reactive mongodb repository.
 
+Exclude mongo configuration (the blocking one and part of reactive):
+```java
+@SpringBootApplication(
+    exclude = {MongoAutoConfiguration.class, MongoReactiveDataAutoConfiguration.class})
+```
+
+Create your own implementation of `AbstractReactiveMongoConfiguration` and annotate `reactiveMongoClient()` with a `@Bean`:
+```java
+@Configuration
+public class CustomerMongoConfig extends AbstractReactiveMongoConfiguration {
+
+  @Autowired private CustomerProperties properties;
+
+  @Override
+  @Bean
+  public MongoClient reactiveMongoClient() {
+    return MongoClients.create(properties.getMongoUri());
+  }
+
+  @Override
+  protected String getDatabaseName() {
+    return properties.getDatabase();
+  }
+}
+
+```
+
+<!---
 The app uses own `AbstractReactiveMongoConfiguration` implementation to use custom configuration for Mongo URI and database name. It works and it connects to mongo on port `27018` but at the same time it uses probably auto configuration and tries to connect on default port `27017`.
 
 I already tried to use `@EnableReactiveMongoRepositories` or to exclude `MongoAutoConfiguration.class` and `MongoDataAutoConfiguration.class`
@@ -31,3 +59,4 @@ Caused by: java.net.ConnectException: Connection refused (Connection refused)
 	... 3 common frames omitted
 
 ```
+-->
